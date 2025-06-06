@@ -3,52 +3,269 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Firebase AI на GitHub Pages</title>
+  <title>Firebase AI Logic: ввод конфигурации вручную</title>
 
-  <!-- Если понадобится свой CSS, можно добавить его здесь -->
-  <!-- <link rel="stylesheet" href="css/styles.css" /> -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      font-size: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-top: 0.25rem;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #555555;
+    }
+    .status.error {
+      color: #c82333;
+    }
+    .section {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+    pre {
+      background: #e9ecef;
+      padding: 1rem;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-top: 1rem;
+      min-height: 100px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-top: 2rem;
+    }
+  </style>
 </head>
 <body>
-  <div style="max-width: 600px; margin: 2rem auto; font-family: Arial, sans-serif;">
-    <h1>Пример генерации текста через Firebase AI</h1>
 
-    <!-- Поле для ввода запроса пользователем -->
-    <label for="user-input">Введите запрос:</label>
-    <textarea id="user-input" rows="4" style="width: 100%;"></textarea>
+  <div class="container">
+    <h1>Настройки Firebase и генерация с AI (Gemini)</h1>
 
-    <!-- Кнопка для отправки запроса -->
-    <button id="generate-btn" style="margin-top: 1rem; padding: 0.5rem 1rem;">
-      Сгенерировать ответ
-    </button>
+    <!-- === Раздел: ввод конфигурации Firebase === -->
+    <div id="firebase-config-section">
+      <label for="apiKey">API Key <span style="color: red;">*</span></label>
+      <input type="text" id="apiKey" placeholder="Например: AIza...">
 
-    <!-- Блок для вывода результата -->
-    <h2 style="margin-top: 2rem;">Ответ модели:</h2>
-    <pre id="model-response" style="background: #f4f4f4; padding: 1rem; white-space: pre-wrap;"></pre>
+      <label for="authDomain">authDomain <span style="color: red;">*</span></label>
+      <input type="text" id="authDomain" placeholder="например: myapp.firebaseapp.com">
+
+      <label for="projectId">projectId <span style="color: red;">*</span></label>
+      <input type="text" id="projectId" placeholder="например: my-app-12345">
+
+      <label for="storageBucket">storageBucket <span style="color: red;">*</span></label>
+      <input type="text" id="storageBucket" placeholder="например: my-app-12345.appspot.com">
+
+      <label for="messagingSenderId">messagingSenderId <span style="color: red;">*</span></label>
+      <input type="text" id="messagingSenderId" placeholder="например: 1234567890">
+
+      <label for="appId">appId <span style="color: red;">*</span></label>
+      <input type="text" id="appId" placeholder="например: 1:1234567890:web:abcdef123456">
+
+      <label for="measurementId">measurementId <span style="color: #aaa;">(опционально)</span></label>
+      <input type="text" id="measurementId" placeholder="например: G-ABCDEFGH">
+
+      <button id="init-firebase-btn" disabled>Инициализировать Firebase</button>
+      <div id="init-status" class="status"></div>
+    </div>
+
+    <!-- === Раздел: генерация через AI (скрыт, пока Firebase не инициализирован) === -->
+    <div id="ai-section" class="section" style="display: none;">
+      <h2>Генерация текста через AI</h2>
+      <label for="user-input">Введите свой запрос:</label>
+      <textarea id="user-input" rows="4" placeholder="Например: «Придумай шутку про котов»."></textarea>
+
+      <button id="generate-btn">Сгенерировать ответ</button>
+      <div id="gen-status" class="status"></div>
+
+      <pre id="model-response"></pre>
+    </div>
+
+    <div class="footer">
+      Demo Firebase AI Logic (Gemini) &copy; 2025
+    </div>
   </div>
 
-  <!-- Подключаем Firebase App (core) через CDN -->
+  <!-- === Подключаем Firebase SDK (App + AI) через CDN === -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js';
     import { getAI, getGenerativeModel } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-ai.js';
 
-    // TODO: Замените поля ниже на конфигурацию вашего Firebase-проекта
-    const firebaseConfig = {
-      apiKey: 'ВАШ_API_KEY',
-      authDomain: 'ВАШ_ПРОЕКТ.firebaseapp.com',
-      projectId: 'ВАШ_ПРОЕКТ_ID',
-      storageBucket: 'ВАШ_ПРОЕКТ.appspot.com',
-      messagingSenderId: '...',
-      appId: '...',
-    };
+    // === Шаг 1: Определим переменные для полей ввода и кнопок ===
+    const apiKeyInput            = document.getElementById('apiKey');
+    const authDomainInput        = document.getElementById('authDomain');
+    const projectIdInput         = document.getElementById('projectId');
+    const storageBucketInput     = document.getElementById('storageBucket');
+    const messagingSenderIdInput = document.getElementById('messagingSenderId');
+    const appIdInput             = document.getElementById('appId');
+    const measurementIdInput     = document.getElementById('measurementId');
 
-    // Инициализация Firebase
-    const firebaseApp = initializeApp(firebaseConfig);
+    const initBtn    = document.getElementById('init-firebase-btn');
+    const initStatus = document.getElementById('init-status');
 
-    // Передадим объект FirebaseApp в глобальную область, чтобы app.js мог его использовать
-    window.__FIREBASE_APP = firebaseApp;
+    const aiSection  = document.getElementById('ai-section');
+    const userInput  = document.getElementById('user-input');
+    const genBtn     = document.getElementById('generate-btn');
+    const genStatus  = document.getElementById('gen-status');
+    const responseEl = document.getElementById('model-response');
+
+    let firebaseApp = null;
+    let aiModel     = null;
+
+    // === Шаг 2: Функция проверки, заполнены ли обязательные поля ===
+    function checkRequiredFields() {
+      if (
+        apiKeyInput.value.trim()            !== '' &&
+        authDomainInput.value.trim()        !== '' &&
+        projectIdInput.value.trim()         !== '' &&
+        storageBucketInput.value.trim()     !== '' &&
+        messagingSenderIdInput.value.trim() !== '' &&
+        appIdInput.value.trim()             !== ''
+      ) {
+        initBtn.disabled = false;
+      } else {
+        initBtn.disabled = true;
+      }
+    }
+
+    // Вешаем слушатели на изменение каждого поля конфигурации
+    [apiKeyInput, authDomainInput, projectIdInput, storageBucketInput, messagingSenderIdInput, appIdInput]
+      .forEach(input => {
+        input.addEventListener('input', checkRequiredFields);
+      });
+
+    // === Шаг 3: Инициализация Firebase при клике ===
+    initBtn.addEventListener('click', () => {
+      const config = {
+        apiKey:            apiKeyInput.value.trim(),
+        authDomain:        authDomainInput.value.trim(),
+        projectId:         projectIdInput.value.trim(),
+        storageBucket:     storageBucketInput.value.trim(),
+        messagingSenderId: messagingSenderIdInput.value.trim(),
+        appId:             appIdInput.value.trim(),
+      };
+      // measurementId — опционально
+      const measId = measurementIdInput.value.trim();
+      if (measId !== '') {
+        config.measurementId = measId;
+      }
+
+      try {
+        // Инициализируем Firebase
+        firebaseApp = initializeApp(config);
+        window.__FIREBASE_APP = firebaseApp;
+        initStatus.textContent = 'Firebase успешно инициализирован ✅';
+        initStatus.classList.remove('error');
+        // Показываем секцию с AI-генерацией
+        aiSection.style.display = 'block';
+        // Блокируем повторную инициализацию
+        initBtn.disabled = true;
+        disableConfigInputs();
+        setupAIModel(); // приступаем к настройке модели
+      } catch (err) {
+        console.error('Ошибка инициализации Firebase:', err);
+        initStatus.textContent = 'Ошибка инициализации: ' + err.message;
+        initStatus.classList.add('error');
+      }
+    });
+
+    // Функция, чтобы отключить поля конфигурации после инициализации
+    function disableConfigInputs() {
+      [apiKeyInput, authDomainInput, projectIdInput, storageBucketInput, messagingSenderIdInput, appIdInput, measurementIdInput]
+        .forEach(input => input.disabled = true);
+    }
+
+    // === Шаг 4: Настройка модели AI после инициализации Firebase ===
+    function setupAIModel() {
+      // На данном этапе firebaseApp уже должен быть инициализирован
+      const ai = getAI(firebaseApp);
+      aiModel = getGenerativeModel(ai, {
+        model: 'gemini-2.5-pro-preview-06-05',
+        generationConfig: {
+          responseMimeType: 'text/plain',
+          // при желании можно добавить: maxOutputTokens, temperature и т.д.
+        },
+      });
+    }
+
+    // === Шаг 5: Обработка клика «Сгенерировать ответ» ===
+    genBtn.addEventListener('click', async () => {
+      const prompt = userInput.value.trim();
+      if (prompt === '') {
+        alert('Введите, пожалуйста, текст запроса.');
+        return;
+      }
+      // Блокируем кнопку и показываем статус
+      genBtn.disabled = true;
+      genStatus.textContent = 'Ждём ответ от модели…';
+      genStatus.classList.remove('error');
+      responseEl.textContent = '';
+
+      try {
+        const chat = aiModel.startChat();
+        const message = { role: 'user', parts: [ prompt ] };
+        const result = await chat.sendMessage(message);
+        const text = result.response.text();
+        responseEl.textContent = text;
+        genStatus.textContent = 'Ответ получен.';
+      } catch (err) {
+        console.error('Ошибка при запросе к модели:', err);
+        genStatus.textContent = 'Ошибка при запросе: ' + err.message;
+        genStatus.classList.add('error');
+      } finally {
+        genBtn.disabled = false;
+      }
+    });
   </script>
-
-  <!-- Подключаем наш скрипт с логикой генерации (app.js) -->
-  <script type="module" src="app.js"></script>
 </body>
 </html>
+
