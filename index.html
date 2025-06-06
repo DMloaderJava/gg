@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Firebase AI на GitHub Pages</title>
+
+  <!-- Если понадобится свой CSS, можно добавить его здесь -->
+  <!-- <link rel="stylesheet" href="css/styles.css" /> -->
+</head>
+<body>
+  <div style="max-width: 600px; margin: 2rem auto; font-family: Arial, sans-serif;">
+    <h1>Пример генерации текста через Firebase AI</h1>
+
+    <!-- Поле для ввода запроса пользователем -->
+    <label for="user-input">Введите запрос:</label>
+    <textarea id="user-input" rows="4" style="width: 100%;"></textarea>
+
+    <!-- Кнопка для отправки запроса -->
+    <button id="generate-btn" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+      Сгенерировать ответ
+    </button>
+
+    <!-- Блок для вывода результата -->
+    <h2 style="margin-top: 2rem;">Ответ модели:</h2>
+    <pre id="model-response" style="background: #f4f4f4; padding: 1rem; white-space: pre-wrap;"></pre>
+  </div>
+
+  <!-- Подключаем Firebase App (core) через CDN -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js';
+    import { getAI, getGenerativeModel } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-ai.js';
+
+    // TODO: Замените поля ниже на конфигурацию вашего Firebase-проекта
+    const firebaseConfig = {
+      apiKey: 'ВАШ_API_KEY',
+      authDomain: 'ВАШ_ПРОЕКТ.firebaseapp.com',
+      projectId: 'ВАШ_ПРОЕКТ_ID',
+      storageBucket: 'ВАШ_ПРОЕКТ.appspot.com',
+      messagingSenderId: '...',
+      appId: '...',
+    };
+
+    // Инициализация Firebase
+    const firebaseApp = initializeApp(firebaseConfig);
+
+    // Передадим объект FirebaseApp в глобальную область, чтобы app.js мог его использовать
+    window.__FIREBASE_APP = firebaseApp;
+  </script>
+
+  <!-- Подключаем наш скрипт с логикой генерации (app.js) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
